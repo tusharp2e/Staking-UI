@@ -2,6 +2,8 @@
 import { useState, useEffect } from "react";
 import abi from "./contracts/kalpBridge.json";
 import giniAbi from "./contracts/giniContract.json";
+import stakingContractAbi from "./contracts/stakingToken.json";
+
 import { ethers } from "ethers";
 import "./App.css"
 
@@ -20,12 +22,31 @@ function PolygonConnect() {
     const [bridgeAmount, setBridgeAmount] = useState("");
     const [receiver, setReceiver] = useState("");
 
+    //stake
+    const [stakingContract, setStakingContract] = useState(null);
+    const [stakeAmount, setStakeAmount] = useState(0);
+    const [rewardRate, setRewardRate] = useState({ numerator: 0, denominator: 0 });
+    const [tokenAddress, setTokenAddress] = useState("");
+    const [startTime, setStartTime] = useState(0);
+    const [duration, setDuration] = useState(0);
+
+    const [setVals, setSetVals] = useState({
+        rewardNumerator: 1,
+        rewardDenominator: 1,
+        start: 0,
+        duration: 0,
+        tokenAddr: "",
+    });
+
+    const STAKING_CONTRACT_ADDRESS = import.meta.env.VITE_STAKING_CONTRACT_ADDRESS;
+
+
     // stagenet - polygon amoy
     const GINI_ABI = giniAbi;
     const CONTRACT_ABI = abi;
     const CONTRACT_ADDRESS = import.meta.env.VITE_CONTRACT_ADDRESS;
     const GINI_ADDRESS = import.meta.env.VITE_GINI_ADDRESS;
-    
+
     const CHAIN_ID = "0x13882";
     const RPC_URL = "https://polygon-amoy.g.alchemy.com/v2/m8XKrD1n0ZnGfcQMEXXW5Q46qmgGmD7w";
     const CHAIN_NAME = "Amoy";
@@ -111,144 +132,209 @@ function PolygonConnect() {
             const webSigner = await webProvider.getSigner();
             const webContract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, webSigner);
             const webContract2 = new ethers.Contract(GINI_ADDRESS, GINI_ABI, webSigner);
+            const stakingContract = new ethers.Contract(STAKING_CONTRACT_ADDRESS, stakingContractAbi, webSigner);
+
 
             setProvider(webProvider);
             setSigner(webSigner);
             setContract(webContract);
             setGiniContract(webContract2);
-
-            return { webProvider, webSigner, webContract, webContract2 };
+            setStakingContract(stakingContract);
+            return { webProvider, webSigner, webContract, webContract2, stakingContract };
         } catch (err) {
             setError(err.message);
         }
     };
 
-    // Remove it 
-    const claimTokens = async () => {
-        try {
-            if (!contract) {
-                throw new Error("Blockchain not initialized. Connect your wallet first.");
-            }
-            const tokens = await contract.unlockedTokens(account);
-            console.log("tokens", tokens[0]);
-            setClaimableTokens(tokens[0]);
-        } catch (err) {
-            setError(err.message);
-        }
-        reloadPage();
-    };
 
-    // Remove it 
-    const withdrawTokens = async () => {
-        try {
-            if (!contract) {
-                throw new Error("Blockchain not initialized. Connect your wallet first.");
-            }
-
-            setStatusMessage("Processing transaction...");
-
-            const tx = await contract.withdrawToken();
-            await tx.wait(); // Wait for transaction confirmation
-            setStatusMessage("Withdrawal successful! Check your wallet balance.");
-        } catch (err) {
-            setError(err.message);
-            setStatusMessage("");
-        }
-        await updateBalance();
-    };
-
-    // Remove it 
-    const approveTokens = async () => {
-        if (!approveAmount || isNaN(approveAmount) || approveAmount <= 0) {
-            alert("Enter a valid amount!");
-            return;
-        }
-
-        try {
-            console.log("#############ApproveAmount#############")
-            console.log(approveAmount);
-            console.log(ethers.parseEther(approveAmount));
-            console.log(ethers.parseEther(approveAmount).toString())
-            const tx = await giniContract.approve(CONTRACT_ADDRESS, ethers.parseEther(approveAmount));
-            await tx.wait();
-            alert(`Tokens Approved!- ${approveAmount} GINI`);
-        } catch (error) {
-            console.error("Approval Error:", error);
-            alert("Approval Failed!");
-        }
-    };
-
-    // Remove it 
-    const bridgeTokens = async () => {
-        if (!bridgeAmount || isNaN(bridgeAmount) || bridgeAmount <= 0) {
-            alert("Enter a valid amount!");
-            return;
-        }
-        if (!ethers.isAddress(receiver)) {
-            alert("Enter a valid Ethereum address!");
-            return;
-        }
-
-        try {
-            const tx = await contract.bridgeToken(receiver, ethers.parseEther(bridgeAmount));
-            await tx.wait();
-            console.log(tx.hash);
-            // setTxId(tx.hash);
-            alert(`${bridgeAmount} GINI Tokens Bridged! `);
-        } catch (error) {
-            console.error("Bridging Error:", error);
-            alert("Bridging Failed!");
-        }
-        await updateBalance();
-    };
-
-    // Remove it 
-    const updateBalance = async () => {
-        try {
-            if (giniContract && account) {
-                const newBalance = await giniContract.balanceOf(account);
-                setBalance(ethers.formatEther(newBalance));
-            }
-        } catch (err) {
-            console.error("Error updating balance:", err);
-        }
-    };
 
     // 1. stake function , button and form
+    const stakeTokens = async () => {
+        try {
+            const tx = await stakingContract.stake(ethers.parseEther(stakeAmount));
+            await tx.wait();
+            alert("Staked successfully");
+        } catch (error) {
+            console.log(error)
+
+        }
+
+    }
     // 2. claim funciton , button 
+    const handleClaim = async () => {
+        try {
+            const tx = await stakingContract.claim();
+            await tx.wait();
+            alert("Claimed successfully");
+        } catch (error) {
+            console.log(error)
+        }
+    };
+
     // 3. getRewardRate  , button 
+
+    const handleGetRewardRate = async () => {
+        try {
+            const [num, denom] = await stakingContract.getRewardRate();
+            setRewardRate({ numerator: Number(num), denominator: Number(denom) });
+
+        } catch (error) {
+            console.log(error);
+        }
+    };
     // 4. giniTokenAddress, load 
+
+
     // 5. rewardNumerator
     // 6. rewardDenominator
     // 7. stakingStartTime , (epoc) => normal timestamp
     // 8. duration , 
     // 9. setValues , 
+    const loadData = async () => {
+        try {
+            const token = await stakingContract.giniTokenAddress();
+            const numerator = await stakingContract.rewardNumerator();
+            const denominator = await stakingContract.rewardDenominator();
+            const start = await stakingContract.stakingStartTime();
+            const dur = await stakingContract.stakingDuration();
+
+            setTokenAddress(token);
+            setRewardRate({ numerator: Number(numerator), denominator: Number(denominator) });
+            setStartTime(Number(start));
+            setDuration(Number(dur));
+
+        } catch (error) {
+            console.log(error);
+        }
+    };
+    const handleSetValues = async () => {
+        try {
+            const tx = await stakingContract.setValues(
+                setVals.rewardNumerator,
+                setVals.rewardDenominator,
+                setVals.start,
+                setVals.duration,
+                setVals.tokenAddr
+            );
+            await tx.wait();
+            alert("Values Set Successfully");
+        } catch (error) {
+            console.log(error);
+        }
+    };
+
+
+
+
 
     return (
         <div className="card">
             {account ? (
-                <div className="wallet-info">
-                    <p><strong>Connected Account:</strong> {account}</p>
-                    <p><strong>Balance:</strong> {balance} GINI</p>
-                    <div className="button-group">
-                        <button onClick={claimTokens} className="btn">Check Claimable Tokens</button>
-                        {claimableTokens !== null && <p><strong>Claimable Tokens:</strong> {claimableTokens}</p>}
-                        <button onClick={withdrawTokens} className="btn btn-green">Withdraw Tokens</button>
+                <>
+                    <div className="stake-section">
+                        <h3>Stake GINI Tokens</h3>
+                        <input
+                            type="number"
+                            placeholder="Stake Amount"
+                            value={stakeAmount}
+                            onChange={(e) => setStakeAmount(e.target.value)}
+                        />
+                        <button onClick={stakeTokens}>Stake</button>
                     </div>
-                    {statusMessage && <p className="status-message">{statusMessage}</p>}
-                    <div className="input-group">
-                        <input type="number" placeholder="Enter amount" value={approveAmount} onChange={(e) => setApproveAmount(e.target.value)} className="input" />
-                        <button onClick={approveTokens} className="btn btn-orange">Approve Tokens</button>
+
+                    <div className="claim-section">
+                        <button onClick={handleClaim}>Claim Rewards</button>
                     </div>
-                    <div className="input-group">
-                        <input type="text" placeholder="Enter Receiver address" value={receiver} onChange={(e) => setReceiver(e.target.value)} className="input" />
-                        <input type="number" placeholder="Enter amount" value={bridgeAmount} onChange={(e) => setBridgeAmount(e.target.value)} className="input" />
-                        <button onClick={bridgeTokens} className="btn btn-blue">Bridge Tokens</button>
+
+                    <div className="reward-section">
+                        <button onClick={handleGetRewardRate}>Get Reward Rate</button>
+                        <p>Reward Rate: {rewardRate.numerator} / {rewardRate.denominator}</p>
                     </div>
-                </div>
+
+                    <div className="info-section">
+                        <button onClick={loadData}>Load Staking Info</button>
+                        <p>Token Address: {tokenAddress}</p>
+                        <p>Start Time: {new Date(startTime * 1000).toLocaleString()}</p>
+                        <p>Duration: {duration} seconds</p>
+                    </div>
+
+                    <div className="set-values">
+                        <h4>Set Staking Values</h4>
+                        <table>
+                            <tbody>
+                                <tr>
+                                    <td><label htmlFor="rewardNumerator">Reward Numerator</label></td>
+                                    <td>
+                                        <input
+                                            id="rewardNumerator"
+                                            type="number"
+                                            placeholder="Reward Numerator"
+                                            value={setVals.rewardNumerator}
+                                            onChange={(e) => setSetVals({ ...setVals, rewardNumerator: e.target.value })}
+                                        />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><label htmlFor="rewardDenominator">Reward Denominator</label></td>
+                                    <td>
+                                        <input
+                                            id="rewardDenominator"
+                                            type="number"
+                                            placeholder="Reward Denominator"
+                                            value={setVals.rewardDenominator}
+                                            onChange={(e) => setSetVals({ ...setVals, rewardDenominator: e.target.value })}
+                                        />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><label htmlFor="start">Start Timestamp</label></td>
+                                    <td>
+                                        <input
+                                            id="start"
+                                            type="number"
+                                            placeholder="Start Timestamp"
+                                            value={setVals.start}
+                                            onChange={(e) => setSetVals({ ...setVals, start: e.target.value })}
+                                        />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><label htmlFor="duration">Duration (seconds)</label></td>
+                                    <td>
+                                        <input
+                                            id="duration"
+                                            type="number"
+                                            placeholder="Duration (seconds)"
+                                            value={setVals.duration}
+                                            onChange={(e) => setSetVals({ ...setVals, duration: e.target.value })}
+                                        />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><label htmlFor="tokenAddr">Token Address</label></td>
+                                    <td>
+                                        <input
+                                            id="tokenAddr"
+                                            type="text"
+                                            placeholder="Token Address"
+                                            value={setVals.tokenAddr}
+                                            onChange={(e) => setSetVals({ ...setVals, tokenAddr: e.target.value })}
+                                        />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td colSpan="2" style={{ textAlign: "center", paddingTop: "10px" }}>
+                                        <button onClick={handleSetValues}>Set Values</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </>
             ) : (
                 <button onClick={connectWallet} className="btn">Connect MetaMask</button>
             )}
+
             {error && <p className="error-message">{error}</p>}
         </div>
     );
