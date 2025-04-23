@@ -33,6 +33,8 @@ function Admin() {
                 stakingToken,
                 startTime,
                 endTime,
+                300,
+                100,
                 adminAddress
             );
             await tx.wait();
