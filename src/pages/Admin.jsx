@@ -203,35 +203,35 @@ function Admin() {
             <div className="staking-contract-info">
                 <div>
                     <h2>Staking Contracts Overview</h2>
-                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                    <table style={{ width: '90%', borderCollapse: 'collapse' }}>
                         <thead>
                             <tr>
-                                <th style={{ border: '1px solid #ddd', padding: '12px 8px', fontWeight: 'bold', textAlign: 'center', }}>Index</th>
-                                <th style={{ border: '1px solid #ddd', padding: '12px 8px', fontWeight: 'bold', textAlign: 'center', }}>Address</th>
-                                <th style={{ border: '1px solid #ddd', padding: '12px 8px', fontWeight: 'bold', textAlign: 'center', }}>Admin</th>
-                                <th style={{ border: '1px solid #ddd', padding: '12px 8px', fontWeight: 'bold', textAlign: 'center', }}>Reward Pool</th>
-                                <th style={{ border: '1px solid #ddd', padding: '12px 8px', fontWeight: 'bold', textAlign: 'center', }}>Total Staked</th>
-                                <th style={{ border: '1px solid #ddd', padding: '12px 8px', fontWeight: 'bold', textAlign: 'center', }}>Start</th>
-                                <th style={{ border: '1px solid #ddd', padding: '12px 8px', fontWeight: 'bold', textAlign: 'center', }}>End</th>
-                                <th style={{ border: '1px solid #ddd', padding: '12px 8px', fontWeight: 'bold', textAlign: 'center', }}>Remaining Reward</th>
+                                <th style={{ border: '1px solid #ddd', padding: '8px 5px', fontWeight: 'bold', textAlign: 'center', }}>Index</th>
+                                <th style={{ border: '1px solid #ddd', padding: '8px 5px', fontWeight: 'bold', textAlign: 'center', }}>Address</th>
+                                <th style={{ border: '1px solid #ddd', padding: '8px 5px', fontWeight: 'bold', textAlign: 'center', }}>Admin</th>
+                                <th style={{ border: '1px solid #ddd', padding: '8px 5px', fontWeight: 'bold', textAlign: 'center', }}>Reward Pool</th>
+                                <th style={{ border: '1px solid #ddd', padding: '8px 5px', fontWeight: 'bold', textAlign: 'center', }}>Total Staked</th>
+                                <th style={{ border: '1px solid #ddd', padding: '8px 5px', fontWeight: 'bold', textAlign: 'center', }}>Start</th>
+                                <th style={{ border: '1px solid #ddd', padding: '8px 5px', fontWeight: 'bold', textAlign: 'center', }}>End</th>
+                                <th style={{ border: '1px solid #ddd', padding: '8px 5px', fontWeight: 'bold', textAlign: 'center', }}>Remaining Reward</th>
                                 {/* <th>Stakers</th> */}
-                                <th style={{ border: '1px solid #ddd', padding: '12px 8px', fontWeight: 'bold', textAlign: 'center', }}>Deposit Reward</th>
-                                <th style={{ border: '1px solid #ddd', padding: '12px 8px', fontWeight: 'bold', textAlign: 'center', }}>Withdraw Leftover</th>
+                                <th style={{ border: '1px solid #ddd', padding: '8px 5px', fontWeight: 'bold', textAlign: 'center', }}>Deposit Reward</th>
+                                <th style={{ border: '1px solid #ddd', padding: '8px 5px', fontWeight: 'bold', textAlign: 'center', }}>Withdraw Leftover</th>
                             </tr>
                         </thead>
                         <tbody>
                             {stakingContracts.map((pool, index) => (
                                 <tr key={index}>
-                                    <td style={{ border: '1px solid #ddd', padding: '12px 8px', textAlign: 'center', }}>{pool.index}</td>
-                                    <td style={{ border: '1px solid #ddd', padding: '12px 8px', textAlign: 'center', }}>{pool.address}</td>
-                                    <td style={{ border: '1px solid #ddd', padding: '12px 8px', textAlign: 'center', }}>{pool.admin}</td>
-                                    <td style={{ border: '1px solid #ddd', padding: '12px 8px', textAlign: 'center', }}>{pool.rewardPool}</td>
-                                    <td style={{ border: '1px solid #ddd', padding: '12px 8px', textAlign: 'center', }}>{pool.totalStakedToken}</td>
-                                    <td style={{ border: '1px solid #ddd', padding: '12px 8px', textAlign: 'center', }}>{pool.startTime}</td>
-                                    <td style={{ border: '1px solid #ddd', padding: '12px 8px', textAlign: 'center', }}>{pool.endTime}</td>
-                                    <td style={{ border: '1px solid #ddd', padding: '12px 8px', textAlign: 'center', }}>{pool.remainingReward}</td>
+                                    <td style={{ border: '1px solid #ddd', padding: '8px 5px', textAlign: 'center', }}>{pool.index}</td>
+                                    <td style={{ border: '1px solid #ddd', padding: '8px 5px', textAlign: 'center', }}>{pool.address}</td>
+                                    <td style={{ border: '1px solid #ddd', padding: '8px 5px', textAlign: 'center', }}>{pool.admin}</td>
+                                    <td style={{ border: '1px solid #ddd', padding: '8px 5px', textAlign: 'center', }}>{pool.rewardPool}</td>
+                                    <td style={{ border: '1px solid #ddd', padding: '8px 5px', textAlign: 'center', }}>{pool.totalStakedToken}</td>
+                                    <td style={{ border: '1px solid #ddd', padding: '8px 5px', textAlign: 'center', }}>{pool.startTime}</td>
+                                    <td style={{ border: '1px solid #ddd', padding: '8px 5px', textAlign: 'center', }}>{pool.endTime}</td>
+                                    <td style={{ border: '1px solid #ddd', padding: '8px 5px', textAlign: 'center', }}>{pool.remainingReward}</td>
                                     {/* <td>{pool.stakers.join(", ")}</td> */}
-                                    <td style={{ border: '1px solid #ddd', padding: '12px 8px', textAlign: 'center', }}>
+                                    <td style={{ border: '1px solid #ddd', padding: '8px 5px', textAlign: 'center', }}>
                                         <input
                                             type="number"
                                             placeholder="Amount"
@@ -241,7 +241,7 @@ function Admin() {
                                             Deposit
                                         </button>
                                     </td>
-                                    <td style={{ border: '1px solid #ddd', padding: '12px 8px', textAlign: 'center', }}>
+                                    <td style={{ border: '1px solid #ddd', padding: '8px 5px', textAlign: 'center', }}>
                                         {pool.isEnded && (
                                             <button onClick={() => handleWithdrawRemainingTokens(pool.contract)} className="btn btn-orange" >
                                                 Withdraw
