@@ -7,15 +7,14 @@ import stakingContractAbi from '../contracts/stakingContract.json';
 
 function Admin() {
     const { register, handleSubmit, getValues } = useForm();
-    const { stakingFactoryContract, signer, stakingTokenContract } = useWallet();
+    const { stakingFactoryContract, signer, stakingTokenContract, account } = useWallet();
     const [txHash, setTxHash] = useState(null);
     const [stakingContracts, setStakingContracts] = useState([]);
     const [error, setError] = useState(null);
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
-        console.log("Signer:", signer);
-        console.log("Staking Factory Contract:", stakingFactoryContract);
+
         if (signer && stakingFactoryContract) {
             console.log("Fetching staking contracts...");
             fetchStakingContracts();
@@ -107,11 +106,11 @@ function Admin() {
     // Add handlers here
     const handleDepositReward = async (stakingContract, amount) => {
         try {
-            const approveTx = await stakingTokenContract.approve(stakingContract.target, ethers.parseEther(amount));
+            const approveTx = await stakingTokenContract.approve(stakingContract.target, ethers.parseEther(amount.toString()));
             await approveTx.wait();
-            const tx = await stakingContract.depositReward({ value: ethers.parseEther(amount.toString()) });
+            const tx = await stakingContract.depositReward(ethers.parseEther(amount.toString()));
             await tx.wait();
-            await fetchStakingContracts(); // refresh
+            await fetchStakingContracts();
         } catch (error) {
             console.error("Error depositing reward:", error);
             setError(error.message);
@@ -119,11 +118,11 @@ function Admin() {
         }
     };
 
-    const handleWithdrawRemainingTokens = async (stakingContract) => {
+    const handleWithdrawRemainingTokens = async (stakingContract, receipient) => {
         try {
-            const tx = await stakingContract.withdrawRemainingTokens();
+            const tx = await stakingContract.withdrawRemainingTokens(receipient);
             await tx.wait();
-            await fetchStakingContracts(); // refresh
+            await fetchStakingContracts();
         } catch (error) {
             console.error("Error withdrawing remaining tokens:", error);
             setError(error.message);
@@ -137,6 +136,9 @@ function Admin() {
             <div className="admin-page">
 
                 <h2>Admin Panel</h2>
+                {account ? (<h3><span style={{ color: "lightGreen" }}>Connected : </span> Wallet Address: {account}</h3>) : (<h3><span style={{ color: "lightRed" }}> Go to Home & Connect your wallet</span></h3>)}
+                <hr />
+
                 <div className="create-staking-contract">
                     <h4>Create Staking Contract</h4>
                     <form
@@ -194,7 +196,7 @@ function Admin() {
                 </div>
                 {txHash && (
                     <div style={{ marginTop: "20px", color: "green", backgroundColor: "white", padding: "5px", borderRadius: "5px" }}>
-                        ✅ Contract created! <br />
+                        Contract created! <br />
                         TX: <a href={`https://amoy.polygonscan.com/tx/${txHash}`} target="_blank" rel="noreferrer">{txHash}</a>
                     </div>
                 )}
@@ -243,9 +245,16 @@ function Admin() {
                                     </td>
                                     <td style={{ border: '1px solid #ddd', padding: '8px 5px', textAlign: 'center', }}>
                                         {pool.isEnded && (
-                                            <button onClick={() => handleWithdrawRemainingTokens(pool.contract)} className="btn btn-orange" >
-                                                Withdraw
-                                            </button>
+                                            <div>
+                                                <input
+                                                    type="text"
+                                                    placeholder="Receipient"
+                                                    onChange={(e) => pool.receipient = e.target.value}
+                                                />
+                                                <button onClick={() => handleWithdrawRemainingTokens(pool.stakingContract, pool.receipient)} className="btn btn-orange" >
+                                                    Withdraw
+                                                </button>
+                                            </div>
                                         )}
                                     </td>
                                 </tr>
@@ -255,12 +264,14 @@ function Admin() {
                 </div>
             </div>
 
-            {error && (
-                <div style={{ marginTop: "20px", color: "red" }}>
-                    ❌ Error: {error}
-                </div>
-            )}
-        </div>
+            {
+                error && (
+                    <div style={{ marginTop: "20px", color: "red" }}>
+                        Error: {error}
+                    </div>
+                )
+            }
+        </div >
     );
 }
 
