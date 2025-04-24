@@ -8,6 +8,7 @@ import stakingContractAbi from '../contracts/stakingContract.json';
 function Admin() {
     const { register, handleSubmit, getValues } = useForm();
     const { stakingFactoryContract, signer, stakingTokenContract, account } = useWallet();
+
     const [txHash, setTxHash] = useState(null);
     const [stakingContracts, setStakingContracts] = useState([]);
     const [error, setError] = useState(null);
@@ -21,25 +22,25 @@ function Admin() {
         }
     }, [signer, stakingFactoryContract]);
 
-    const createStakingContract = async (stakingToken, startTime, endTime, adminAddress) => {
+    const createStakingContract = async (stakingToken, startTime, endTime, capNumerator, capDenominator, adminAddress) => {
         if (!stakingFactoryContract || !signer) {
             setError("Wallet not connected or contract not loaded.");
             return;
         }
-
         try {
             setLoading(true);
             const tx = await stakingFactoryContract.createStakingPool(
                 stakingToken,
                 startTime,
                 endTime,
-                300,
-                100,
+                capNumerator,
+                capDenominator,
                 adminAddress
             );
             await tx.wait();
             setTxHash(tx.hash);
             setError(null);
+            await fetchStakingContracts();
         } catch (err) {
             console.error("Transaction failed:", err);
             setError(err.message);
@@ -106,10 +107,19 @@ function Admin() {
 
 
     // Add handlers here
-    const handleDepositReward = async (stakingContract, amount) => {
+
+    const handleApprove = async (stakingContract, amount) => {
         try {
             const approveTx = await stakingTokenContract.approve(stakingContract.target, ethers.parseEther(amount.toString()));
             await approveTx.wait();
+        } catch (error) {
+            console.error("Error approving tokens:", error);
+            setError(error.message);
+
+        }
+    }
+    const handleDepositReward = async (stakingContract, amount) => {
+        try {
             const tx = await stakingContract.depositReward(ethers.parseEther(amount.toString()));
             await tx.wait();
             await fetchStakingContracts();
@@ -155,6 +165,8 @@ function Admin() {
                                 getValues('stakingTokenAddress'),
                                 startTime,
                                 endTime,
+                                getValues('capNumerator'),
+                                getValues('capDenominator'),
                                 getValues('adminAddress')
                             );
                         })}
@@ -177,6 +189,18 @@ function Admin() {
                                     <td><label htmlFor="endTime">End Time</label></td>
                                     <td>
                                         <input id="endTime" type="datetime-local" {...register('endTime')} className="input" />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><label htmlFor="capNumerator">Cap Numerator</label></td>
+                                    <td>
+                                        <input id="capNumerator" type="text" placeholder="Cap Numerator" {...register('capNumerator')} className="input" />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><label htmlFor="capDenominator">Cap Denominator</label></td>
+                                    <td>
+                                        <input id="capDenominator" type="text" placeholder="Cap Denominator..." {...register('capDenominator')} className="input" />
                                     </td>
                                 </tr>
                                 <tr>
@@ -241,7 +265,10 @@ function Admin() {
                                             placeholder="Amount"
                                             onChange={(e) => pool.depositAmount = e.target.value}
                                         />
-                                        <button onClick={() => handleDepositReward(pool.stakingContract, pool.depositAmount)} className="btn btn-orange" >
+                                        <button onClick={() => handleApprove(pool.stakingContract, pool.depositAmount)} disabled={pool.isEnded} className="btn btn-orange" >
+                                            Approve
+                                        </button>
+                                        <button onClick={() => handleDepositReward(pool.stakingContract, pool.depositAmount)} disabled={pool.isEnded} className="btn btn-orange" >
                                             Deposit
                                         </button>
                                     </td>
